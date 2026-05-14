@@ -1,5 +1,7 @@
 # Лабораторная работа №4 — модель процессора и транслятор
 
+[![CI](https://github.com/kr1v0mr0/lab4csa/actions/workflows/ci.yml/badge.svg)](https://github.com/kr1v0mr0/lab4csa/actions/workflows/ci.yml)
+
 ## Шапка (заполнить перед сдачей)
 
 | Поле | Значение |
@@ -59,13 +61,9 @@
 
 ### 1.4. CI (GitHub Actions)
 
-После публикации репозитория подставьте `OWNER` и `REPO` и вставьте в начало README (или рядом с разделом про тесты) бейдж, чтобы отчёт CI был доступен из репозитория одним кликом:
+Репозиторий: [github.com/kr1v0mr0/lab4csa](https://github.com/kr1v0mr0/lab4csa). Статус сборки — бейдж в шапке README.
 
-```text
-[![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/OWNER/REPO/actions/workflows/ci.yml)
-```
-
-Workflow: `.github/workflows/ci.yml` (`ruff`, `mypy`, `pytest`).
+Workflow: [`.github/workflows/ci.yml`](https://github.com/kr1v0mr0/lab4csa/blob/main/.github/workflows/ci.yml) (`ruff`, `mypy`, `pytest`).
 
 ---
 
@@ -263,7 +261,7 @@ scripts/             — regen_golden.py (перегенерация этало�
 
 ## 12. Самооценка по критериям (шкала 0–40)
 
-**Ориентир: 34–36 баллов** при условии, что репозиторий опубликован на GitHub/GitLab и в README вставлен рабочий бейдж на Actions (см. §1.4), а на защите вы уверенно объясняете микрокод, поток данных и проходы транслятора.
+**Ориентир: 34–36 баллов** при уверенном объяснении на защите микрокода, потока данных и проходов транслятора; репозиторий и бейдж CI: см. шапку README и §1.4.
 
 | Критерий | Комментарий |
 |----------|-------------|
