@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+ENV/
+
+# Tools
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
+Desktop.ini
+
+# Локальные артефакты сборки
+*.bin
+*.bi
+_golden_tmp.bin
+/*.lst
+src/*.lst
+src/out.bi
+src/input.txt
+src/tests_in.txt

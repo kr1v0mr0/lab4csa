@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install tools
+        run: pip install pytest ruff mypy
+      - name: Ruff
+        run: ruff check src tests scripts
+      - name: Mypy
+        run: mypy
+      - name: Pytest
+        run: pytest tests -v

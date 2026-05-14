@@ -1,0 +1,93 @@
+.section TEXT
+.equ PORT_IN 0
+.equ PORT_OUT 1
+.equ NL 10
+main:
+    CALL prompt
+    CALL read_name
+    CALL greet
+    HALT
+prompt:
+    PUSH #87
+    OUT PORT_OUT
+    PUSH #104
+    OUT PORT_OUT
+    PUSH #97
+    OUT PORT_OUT
+    PUSH #116
+    OUT PORT_OUT
+    PUSH #32
+    OUT PORT_OUT
+    PUSH #105
+    OUT PORT_OUT
+    PUSH #115
+    OUT PORT_OUT
+    PUSH #32
+    OUT PORT_OUT
+    PUSH #121
+    OUT PORT_OUT
+    PUSH #111
+    OUT PORT_OUT
+    PUSH #117
+    OUT PORT_OUT
+    PUSH #114
+    OUT PORT_OUT
+    PUSH #32
+    OUT PORT_OUT
+    PUSH #110
+    OUT PORT_OUT
+    PUSH #97
+    OUT PORT_OUT
+    PUSH #109
+    OUT PORT_OUT
+    PUSH #101
+    OUT PORT_OUT
+    PUSH #63
+    OUT PORT_OUT
+    PUSH #10
+    OUT PORT_OUT
+    RET
+read_name:
+    IN PORT_IN
+    POP 300
+    IN PORT_IN
+    POP 301
+    IN PORT_IN
+    POP 302
+    IN PORT_IN
+    POP 303
+    IN PORT_IN
+    POP 304
+    IN PORT_IN
+    DROP
+    RET
+greet:
+    PUSH #72
+    OUT PORT_OUT
+    PUSH #101
+    OUT PORT_OUT
+    PUSH #108
+    OUT PORT_OUT
+    PUSH #108
+    OUT PORT_OUT
+    PUSH #111
+    OUT PORT_OUT
+    PUSH #44
+    OUT PORT_OUT
+    PUSH #32
+    OUT PORT_OUT
+    PUSH_ADDR 300
+    OUT PORT_OUT
+    PUSH_ADDR 301
+    OUT PORT_OUT
+    PUSH_ADDR 302
+    OUT PORT_OUT
+    PUSH_ADDR 303
+    OUT PORT_OUT
+    PUSH_ADDR 304
+    OUT PORT_OUT
+    PUSH #33
+    OUT PORT_OUT
+    PUSH #10
+    OUT PORT_OUT
+    RET
