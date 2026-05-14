@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 class Signal:
     LATCH_AR_PC = "LATCH_AR_PC"
     LATCH_AR_SP = "LATCH_AR_SP"
@@ -36,7 +39,7 @@ class Signal:
     HALT = "HALT"
 
 
-MICROCODE = {
+MICROCODE: dict[str | int, list[list[str]]] = {
     "FETCH": [
         [Signal.LATCH_AR_PC],
         [Signal.READ],
@@ -209,3 +212,23 @@ MICROCODE = {
     0x27: [[Signal.V_ALU_DIV]],
     0x28: [[Signal.V_ALU_CMP]],
 }
+
+
+def _build_micro_rom() -> tuple[tuple[tuple[str, ...], ...], int, dict[int, tuple[int, int]]]:
+    """Линейное ПЗУ: одно слово = один такт; параллельные сигналы — в кортеже."""
+    words: list[tuple[str, ...]] = []
+    for step in MICROCODE["FETCH"]:
+        words.append(tuple(step))
+    fetch_len = len(words)
+    opcode_range: dict[int, tuple[int, int]] = {}
+    for opc in sorted(k for k in MICROCODE if k != "FETCH"):
+        start = len(words)
+        for step in MICROCODE[opc]:
+            words.append(tuple(step))
+        opcode_range[int(opc)] = (start, len(words) - start)
+    return tuple(words), fetch_len, opcode_range
+
+
+# ПЗУ микропрограмм: отдельное адресное пространство от основной памяти данных/команд
+MICRO_ROM_WORDS, FETCH_MICRO_LEN, OPCODE_MICRO_RANGE = _build_micro_rom()
+MICRO_ROM_SIZE: int = len(MICRO_ROM_WORDS)

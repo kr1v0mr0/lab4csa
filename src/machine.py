@@ -1,15 +1,22 @@
+from __future__ import annotations
+
 import struct
 import sys
 from collections import defaultdict, deque
-from typing import cast
+from pathlib import Path
 
-from microcode import MICROCODE, Signal
-
-MicroProg = list[list[str]]
+from microcode import (
+    FETCH_MICRO_LEN,
+    MICRO_ROM_WORDS,
+    OPCODE_MICRO_RANGE,
+    Signal,
+)
 
 
 class Processor:
-    def __init__(self, binary_file_path, input_data):
+    """Модель процессора: микрокоманды выбираются из отдельного ПЗУ `MICRO_ROM_WORDS`."""
+
+    def __init__(self, binary_file_path: str | Path, input_data: str) -> None:
         self.memory_size = 2048
         self.memory = [0] * self.memory_size
         self.load_binary(binary_file_path)
@@ -23,7 +30,7 @@ class Processor:
         self.v_idx = 0
 
         self.port_input_queues = {0: deque(ord(c) for c in input_data)}
-        self.port_output_buffers = defaultdict(list)
+        self.port_output_buffers: dict[int, list[int]] = defaultdict(list)
 
         self.takt_counter = 0
         self.halted = False
@@ -33,11 +40,13 @@ class Processor:
         self.z_flag = False
         self.n_flag = False
 
-        self.current_microcode: MicroProg | None = None
+        # Микропрограммный счётчик: адрес в ПЗУ микрокода; _rom_idle — конец макроцикла EXECUTE
+        self._rom_idle = True
+        self._micro_pc = 0
+        self._micro_end = 0
         self.current_step_name = ""
-        self.micro_step = 0
 
-    def load_binary(self, path):
+    def load_binary(self, path: str | Path) -> None:
         with open(path, "rb") as f:
             data = f.read()
             if not data:
@@ -46,13 +55,13 @@ class Processor:
             for i, word in enumerate(words):
                 self.memory[i] = word
 
-    def decode(self, instruction):
+    def decode(self, instruction: int) -> tuple[int, int, int]:
         opcode = (instruction >> 24) & 0xFF
         v_bits = (instruction >> 20) & 0xF
         arg = instruction & 0xFFFFF
         return opcode, v_bits, arg
 
-    def read_input_port(self, port):
+    def read_input_port(self, port: int) -> int | None:
         port = port & 0xFFFFF
         q = self.port_input_queues.get(port)
         if not q:
@@ -61,11 +70,11 @@ class Processor:
             return None
         return q.popleft()
 
-    def write_output_port(self, port, value):
+    def write_output_port(self, port: int, value: int) -> None:
         port = port & 0xFFFFF
         self.port_output_buffers[port].append(value)
 
-    def output_text(self):
+    def output_text(self) -> str:
         if 1 in self.port_output_buffers:
             return "".join(
                 chr(v) if isinstance(v, int) and 0 <= v < 256 else str(v)
@@ -80,38 +89,41 @@ class Processor:
             parts.append(f"[port {p}] {s}")
         return "\n".join(parts) if parts else ""
 
-    def takt(self):
+    def takt(self) -> None:
         if self.halted:
             return
-        if self.current_microcode is None:
+        if self._rom_idle:
+            self._micro_pc = 0
+            self._micro_end = FETCH_MICRO_LEN
+            self._rom_idle = False
             self.current_step_name = "FETCH"
-            self.current_microcode = cast(MicroProg, MICROCODE["FETCH"])
-            self.micro_step = 0
             self.v_idx = 0
 
-        prog = cast(MicroProg, self.current_microcode)
-        signals = prog[self.micro_step]
-        for signal in signals:
+        bundle = MICRO_ROM_WORDS[self._micro_pc]
+        for signal in bundle:
             self.execute_signal(signal)
 
         self.takt_counter += 1
-        self.micro_step += 1
+        self._micro_pc += 1
 
-        if self.micro_step >= len(prog):
-            if self.current_step_name == "FETCH":
-                opcode, v_bits, arg = self.decode(self.ir)
-                self.current_step_name = "EXECUTE"
-                if opcode in MICROCODE:
-                    self.current_microcode = cast(MicroProg, MICROCODE[opcode])
-                else:
-                    raise RuntimeError(
-                        f"Unknown opcode {hex(opcode)} at PC {self.pc - 1}"
-                    )
-                self.micro_step = 0
-            else:
-                self.current_microcode = None
+        if self._micro_pc >= self._micro_end:
+            self._finish_micro_sequence()
 
-    def execute_signal(self, signal):
+    def _finish_micro_sequence(self) -> None:
+        if self.current_step_name == "FETCH":
+            opcode, _v_bits, _arg = self.decode(self.ir)
+            self.current_step_name = "EXECUTE"
+            if opcode not in OPCODE_MICRO_RANGE:
+                raise RuntimeError(
+                    f"Unknown opcode {hex(opcode)} at PC {self.pc - 1}"
+                )
+            start, length = OPCODE_MICRO_RANGE[opcode]
+            self._micro_pc = start
+            self._micro_end = start + length
+        else:
+            self._rom_idle = True
+
+    def execute_signal(self, signal: str) -> None:
         if signal == Signal.READ:
             self.dr = self.memory[self.ar]
         elif signal == Signal.WRITE:
@@ -238,11 +250,11 @@ class Processor:
         elif signal == Signal.HALT:
             self.halted = True
 
-    def update_flags(self, value):
+    def update_flags(self, value: int) -> None:
         self.z_flag = value == 0
         self.n_flag = value < 0
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"TICK: {self.takt_counter:4} | PC: {self.pc:3} | SP: {self.sp:4} | "
             f"AR: {self.ar:4} | DR: {self.dr:10} | IR: {self.ir:08X}"
@@ -250,7 +262,7 @@ class Processor:
 
 
 def run_until_halt(
-    code_path: str,
+    code_path: str | Path,
     input_data: str = "",
     tick_limit: int = 100_000_000,
 ) -> tuple[str, int]:
@@ -263,7 +275,7 @@ def run_until_halt(
 
 
 def run_until_halt_with_trace_prefix(
-    code_path: str,
+    code_path: str | Path,
     input_data: str = "",
     *,
     trace_prefix_lines: int = 0,
@@ -282,10 +294,12 @@ def run_until_halt_with_trace_prefix(
     return proc.output_text(), proc.takt_counter, trace
 
 
-def start_simulation(code_path, input_path="", trace=False):
+def start_simulation(
+    code_path: str | Path, input_path: str = "", trace: bool = False
+) -> None:
     input_data = ""
     if input_path:
-        with open(input_path, "r", encoding="utf-8") as f:
+        with open(input_path, encoding="utf-8") as f:
             input_data = f.read()
 
     proc = Processor(code_path, input_data)
@@ -311,7 +325,7 @@ def start_simulation(code_path, input_path="", trace=False):
 def _read_input(path: str) -> str:
     if not path:
         return ""
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         return f.read()
 
 
@@ -337,10 +351,7 @@ if __name__ == "__main__":
         except (IndexError, ValueError):
             print("--trace-prefix требует целое N и опционально путь к файлу")
             sys.exit(1)
-        if (
-            i + 2 < len(raw_args)
-            and not raw_args[i + 2].startswith("--")
-        ):
+        if i + 2 < len(raw_args) and not raw_args[i + 2].startswith("--"):
             trace_prefix_file = raw_args[i + 2]
             skip_idx.add(i + 2)
     args = [

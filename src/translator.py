@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import re
 import struct
 import sys
@@ -194,7 +196,9 @@ def preprocess_all(raw_lines: list[str]) -> list[str]:
     return code
 
 
-def step1(lines: list[str]):
+def step1(
+    lines: list[str],
+) -> tuple[dict[str, int], dict[str, int], list[str]]:
     labels: dict[str, int] = {}
     equates: dict[str, int] = {}
     cleaned: list[str] = []
@@ -241,7 +245,9 @@ def step1(lines: list[str]):
     return labels, equates, cleaned
 
 
-def step2(instructions: list[str], labels: dict[str, int], equates: dict[str, int]):
+def step2(
+    instructions: list[str], labels: dict[str, int], equates: dict[str, int]
+) -> tuple[list[int], list[str]]:
     binary: list[int] = []
     listing: list[str] = []
     labels_by_addr = {v: k for k, v in labels.items()}
