@@ -2,8 +2,7 @@
 
 [![CI](https://github.com/kr1v0mr0/lab4csa/actions/workflows/ci.yml/badge.svg)](https://github.com/kr1v0mr0/lab4csa/actions/workflows/ci.yml)
 
-## Шапка (заполнить перед сдачей)
-
+## Шапка 
 | Поле | Значение |
 |------|----------|
 | **ФИО** | Крылова Мария Дмитриевна |
