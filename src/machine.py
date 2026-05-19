@@ -11,6 +11,24 @@ from microcode import (
     OPCODE_MICRO_RANGE,
     Signal,
 )
+from opcodes import OPCODES
+
+OPCODE_NAMES = {opcode: mnemonic for mnemonic, opcode in OPCODES.items()}
+NO_OPERAND_OPS = {
+    "NOP",
+    "HALT",
+    "DROP",
+    "DUP",
+    "RET",
+    "IEXEC",
+    "ADD",
+    "SUB",
+    "MUL",
+    "DIV",
+    "MOD",
+    "CMP",
+}
+VREG_NAMES = ("V0", "V1", "V2", "V3")
 
 
 class Processor:
@@ -45,6 +63,7 @@ class Processor:
         self._micro_pc = 0
         self._micro_end = 0
         self.current_step_name = ""
+        self.last_io_event = "-"
 
     def load_binary(self, path: str | Path) -> None:
         with open(path, "rb") as f:
@@ -123,6 +142,27 @@ class Processor:
         else:
             self._rom_idle = True
 
+    def _vector_operands(self) -> tuple[int, int, int]:
+        _opcode, v_bits, arg = self.decode(self.ir)
+        return v_bits & 0x3, (arg >> 18) & 0x3, (arg >> 16) & 0x3
+
+    def _apply_vector_alu(self, operation: str) -> None:
+        dst, left, right = self._vector_operands()
+        for lane in range(4):
+            a = self.v_regs[left][lane]
+            b = self.v_regs[right][lane]
+            if operation == "add":
+                value = a + b
+            elif operation == "sub":
+                value = a - b
+            elif operation == "mul":
+                value = a * b
+            elif operation == "div":
+                value = a // b if b != 0 else 0
+            else:
+                raise RuntimeError(f"unknown vector ALU operation: {operation}")
+            self.v_regs[dst][lane] = value
+
     def execute_signal(self, signal: str) -> None:
         if signal == Signal.READ:
             self.dr = self.memory[self.ar]
@@ -181,12 +221,15 @@ class Processor:
             _, _, port = self.decode(self.ir)
             val = self.read_input_port(port)
             if val is None:
+                self.last_io_event = f"IN p{port} -> EOF"
                 self.halted = True
             else:
                 self.dr = val
+                self.last_io_event = f"IN p{port} -> {val}"
         elif signal == Signal.OUT:
             _, _, port = self.decode(self.ir)
             self.write_output_port(port, self.dr)
+            self.last_io_event = f"OUT p{port} <- {self.dr}"
         elif signal == Signal.V_LATCH:
             _, v_bits, _ = self.decode(self.ir)
             self.v_regs[v_bits & 0x3][self.v_idx] = self.dr
@@ -210,32 +253,19 @@ class Processor:
             self.ar += 1
             self.v_idx = (self.v_idx + 1) % 4
         elif signal == Signal.V_ALU_ADD:
-            _, v_bits, arg = self.decode(self.ir)
-            v_res, v1, v2 = v_bits & 0x3, (arg >> 18) & 0x3, (arg >> 16) & 0x3
-            for i in range(4):
-                self.v_regs[v_res][i] = self.v_regs[v1][i] + self.v_regs[v2][i]
+            self._apply_vector_alu("add")
         elif signal == Signal.V_ALU_SUB:
-            _, v_bits, arg = self.decode(self.ir)
-            v_res, v1, v2 = v_bits & 0x3, (arg >> 18) & 0x3, (arg >> 16) & 0x3
-            for i in range(4):
-                self.v_regs[v_res][i] = self.v_regs[v1][i] - self.v_regs[v2][i]
+            self._apply_vector_alu("sub")
         elif signal == Signal.V_ALU_MUL:
-            _, v_bits, arg = self.decode(self.ir)
-            v_res, v1, v2 = v_bits & 0x3, (arg >> 18) & 0x3, (arg >> 16) & 0x3
-            for i in range(4):
-                self.v_regs[v_res][i] = self.v_regs[v1][i] * self.v_regs[v2][i]
+            self._apply_vector_alu("mul")
         elif signal == Signal.V_ALU_DIV:
-            _, v_bits, arg = self.decode(self.ir)
-            v_res, v1, v2 = v_bits & 0x3, (arg >> 18) & 0x3, (arg >> 16) & 0x3
-            for i in range(4):
-                b = self.v_regs[v2][i]
-                self.v_regs[v_res][i] = (
-                    self.v_regs[v1][i] // b if b != 0 else 0
-                )
+            self._apply_vector_alu("div")
         elif signal == Signal.V_ALU_CMP:
-            _, v_bits, arg = self.decode(self.ir)
-            v1, v2 = (arg >> 18) & 0x3, (arg >> 16) & 0x3
-            diffs = [self.v_regs[v1][i] - self.v_regs[v2][i] for i in range(4)]
+            _dst, left, right = self._vector_operands()
+            diffs = [
+                self.v_regs[left][lane] - self.v_regs[right][lane]
+                for lane in range(4)
+            ]
             self.z_flag = all(d == 0 for d in diffs)
             self.n_flag = (not self.z_flag) and (diffs[0] < 0)
         elif signal == Signal.LATCH_DR_PC:
@@ -254,10 +284,53 @@ class Processor:
         self.z_flag = value == 0
         self.n_flag = value < 0
 
+    def format_instruction(self, instruction: int) -> str:
+        opcode, v_bits, arg = self.decode(instruction)
+        mnemonic = OPCODE_NAMES.get(opcode, f"OP_{opcode:02X}")
+        if mnemonic in NO_OPERAND_OPS:
+            return mnemonic
+        if mnemonic in {"V_ADD", "V_SUB", "V_MUL", "V_DIV", "V_CMP"}:
+            v_res = VREG_NAMES[v_bits & 0x3]
+            v1 = VREG_NAMES[(arg >> 18) & 0x3]
+            v2 = VREG_NAMES[(arg >> 16) & 0x3]
+            if mnemonic == "V_CMP":
+                return f"{mnemonic} {v1}, {v2}"
+            return f"{mnemonic} {v_res}, {v1}, {v2}"
+        if mnemonic in {"V_LOAD", "V_STORE", "V_FILL"}:
+            return f"{mnemonic} {VREG_NAMES[v_bits & 0x3]}, {arg}"
+        if mnemonic == "V_EXTRACT":
+            return f"{mnemonic} {VREG_NAMES[v_bits & 0x3]}, {arg & 0x3}"
+        if mnemonic == "PUSH":
+            return f"{mnemonic} #{arg}"
+        return f"{mnemonic} {arg}"
+
+    def _trace_micro_pc(self) -> int:
+        return 0 if self._rom_idle else self._micro_pc
+
+    def _trace_step_name(self) -> str:
+        return "FETCH" if self._rom_idle else self.current_step_name
+
+    def _trace_signals(self) -> str:
+        if self.halted:
+            return "-"
+        bundle = MICRO_ROM_WORDS[self._trace_micro_pc()]
+        return ",".join(bundle) if bundle else "-"
+
+    def _trace_instruction(self) -> str:
+        if self.halted:
+            return "HALTED"
+        if self._rom_idle or self.current_step_name == "FETCH":
+            return self.format_instruction(self.memory[self.pc])
+        return self.format_instruction(self.ir)
+
     def __repr__(self) -> str:
         return (
             f"TICK: {self.takt_counter:4} | PC: {self.pc:3} | SP: {self.sp:4} | "
-            f"AR: {self.ar:4} | DR: {self.dr:10} | IR: {self.ir:08X}"
+            f"AR: {self.ar:4} | DR: {self.dr:10} | IR: {self.ir:08X} | "
+            f"Z: {int(self.z_flag)} | N: {int(self.n_flag)} | "
+            f"STEP: {self._trace_step_name():7} | uPC: {self._trace_micro_pc():3} | "
+            f"SIG: {self._trace_signals()} | INS: {self._trace_instruction()} | "
+            f"IO: {self.last_io_event}"
         )
 
 

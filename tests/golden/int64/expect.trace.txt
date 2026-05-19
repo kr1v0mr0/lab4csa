@@ -1,40 +1,40 @@
-TICK:    0 | PC:   0 | SP: 2047 | AR:    0 | DR:          0 | IR: 00000000
-TICK:    1 | PC:   0 | SP: 2047 | AR:    0 | DR:          0 | IR: 00000000
-TICK:    2 | PC:   0 | SP: 2047 | AR:    0 | DR:   34603007 | IR: 00000000
-TICK:    3 | PC:   1 | SP: 2047 | AR:    0 | DR:   34603007 | IR: 020FFFFF
-TICK:    4 | PC:   1 | SP: 2047 | AR:    0 | DR:    1048575 | IR: 020FFFFF
-TICK:    5 | PC:   1 | SP: 2046 | AR:    0 | DR:    1048575 | IR: 020FFFFF
-TICK:    6 | PC:   1 | SP: 2046 | AR: 2046 | DR:    1048575 | IR: 020FFFFF
-TICK:    7 | PC:   1 | SP: 2046 | AR: 2046 | DR:    1048575 | IR: 020FFFFF
-TICK:    8 | PC:   1 | SP: 2046 | AR:    1 | DR:    1048575 | IR: 020FFFFF
-TICK:    9 | PC:   1 | SP: 2046 | AR:    1 | DR:   50331748 | IR: 020FFFFF
-TICK:   10 | PC:   2 | SP: 2046 | AR:    1 | DR:   50331748 | IR: 03000064
-TICK:   11 | PC:   2 | SP: 2046 | AR: 2046 | DR:   50331748 | IR: 03000064
-TICK:   12 | PC:   2 | SP: 2046 | AR: 2046 | DR:    1048575 | IR: 03000064
-TICK:   13 | PC:   2 | SP: 2046 | AR:  100 | DR:    1048575 | IR: 03000064
-TICK:   14 | PC:   2 | SP: 2046 | AR:  100 | DR:    1048575 | IR: 03000064
-TICK:   15 | PC:   2 | SP: 2047 | AR:  100 | DR:    1048575 | IR: 03000064
-TICK:   16 | PC:   2 | SP: 2047 | AR:    2 | DR:    1048575 | IR: 03000064
-TICK:   17 | PC:   2 | SP: 2047 | AR:    2 | DR:   33554432 | IR: 03000064
-TICK:   18 | PC:   3 | SP: 2047 | AR:    2 | DR:   33554432 | IR: 02000000
-TICK:   19 | PC:   3 | SP: 2047 | AR:    2 | DR:          0 | IR: 02000000
-TICK:   20 | PC:   3 | SP: 2046 | AR:    2 | DR:          0 | IR: 02000000
-TICK:   21 | PC:   3 | SP: 2046 | AR: 2046 | DR:          0 | IR: 02000000
-TICK:   22 | PC:   3 | SP: 2046 | AR: 2046 | DR:          0 | IR: 02000000
-TICK:   23 | PC:   3 | SP: 2046 | AR:    3 | DR:          0 | IR: 02000000
-TICK:   24 | PC:   3 | SP: 2046 | AR:    3 | DR:   50331749 | IR: 02000000
-TICK:   25 | PC:   4 | SP: 2046 | AR:    3 | DR:   50331749 | IR: 03000065
-TICK:   26 | PC:   4 | SP: 2046 | AR: 2046 | DR:   50331749 | IR: 03000065
-TICK:   27 | PC:   4 | SP: 2046 | AR: 2046 | DR:          0 | IR: 03000065
-TICK:   28 | PC:   4 | SP: 2046 | AR:  101 | DR:          0 | IR: 03000065
-TICK:   29 | PC:   4 | SP: 2046 | AR:  101 | DR:          0 | IR: 03000065
-TICK:   30 | PC:   4 | SP: 2047 | AR:  101 | DR:          0 | IR: 03000065
-TICK:   31 | PC:   4 | SP: 2047 | AR:    4 | DR:          0 | IR: 03000065
-TICK:   32 | PC:   4 | SP: 2047 | AR:    4 | DR:   33554433 | IR: 03000065
-TICK:   33 | PC:   5 | SP: 2047 | AR:    4 | DR:   33554433 | IR: 02000001
-TICK:   34 | PC:   5 | SP: 2047 | AR:    4 | DR:          1 | IR: 02000001
-TICK:   35 | PC:   5 | SP: 2046 | AR:    4 | DR:          1 | IR: 02000001
-TICK:   36 | PC:   5 | SP: 2046 | AR: 2046 | DR:          1 | IR: 02000001
-TICK:   37 | PC:   5 | SP: 2046 | AR: 2046 | DR:          1 | IR: 02000001
-TICK:   38 | PC:   5 | SP: 2046 | AR:    5 | DR:          1 | IR: 02000001
-TICK:   39 | PC:   5 | SP: 2046 | AR:    5 | DR:   50331750 | IR: 02000001
+TICK:    0 | PC:   0 | SP: 2047 | AR:    0 | DR:          0 | IR: 00000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: PUSH #1048575 | IO: -
+TICK:    1 | PC:   0 | SP: 2047 | AR:    0 | DR:   34603007 | IR: 00000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: PUSH #1048575 | IO: -
+TICK:    2 | PC:   1 | SP: 2047 | AR:    0 | DR:   34603007 | IR: 020FFFFF | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   5 | SIG: LATCH_DR_ARG | INS: PUSH #1048575 | IO: -
+TICK:    3 | PC:   1 | SP: 2047 | AR:    0 | DR:    1048575 | IR: 020FFFFF | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   6 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH #1048575 | IO: -
+TICK:    4 | PC:   1 | SP: 2046 | AR: 2046 | DR:    1048575 | IR: 020FFFFF | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: POP 100 | IO: -
+TICK:    5 | PC:   1 | SP: 2046 | AR:    1 | DR:   50331748 | IR: 020FFFFF | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: POP 100 | IO: -
+TICK:    6 | PC:   2 | SP: 2046 | AR:    1 | DR:   50331748 | IR: 03000064 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   7 | SIG: LATCH_AR_SP,READ | INS: POP 100 | IO: -
+TICK:    7 | PC:   2 | SP: 2046 | AR: 2046 | DR:    1048575 | IR: 03000064 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   8 | SIG: LATCH_AR_ADDR,WRITE,LATCH_SP_INC | INS: POP 100 | IO: -
+TICK:    8 | PC:   2 | SP: 2047 | AR:  100 | DR:    1048575 | IR: 03000064 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: PUSH #0 | IO: -
+TICK:    9 | PC:   2 | SP: 2047 | AR:    2 | DR:   33554432 | IR: 03000064 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: PUSH #0 | IO: -
+TICK:   10 | PC:   3 | SP: 2047 | AR:    2 | DR:   33554432 | IR: 02000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   5 | SIG: LATCH_DR_ARG | INS: PUSH #0 | IO: -
+TICK:   11 | PC:   3 | SP: 2047 | AR:    2 | DR:          0 | IR: 02000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   6 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH #0 | IO: -
+TICK:   12 | PC:   3 | SP: 2046 | AR: 2046 | DR:          0 | IR: 02000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: POP 101 | IO: -
+TICK:   13 | PC:   3 | SP: 2046 | AR:    3 | DR:   50331749 | IR: 02000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: POP 101 | IO: -
+TICK:   14 | PC:   4 | SP: 2046 | AR:    3 | DR:   50331749 | IR: 03000065 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   7 | SIG: LATCH_AR_SP,READ | INS: POP 101 | IO: -
+TICK:   15 | PC:   4 | SP: 2046 | AR: 2046 | DR:          0 | IR: 03000065 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   8 | SIG: LATCH_AR_ADDR,WRITE,LATCH_SP_INC | INS: POP 101 | IO: -
+TICK:   16 | PC:   4 | SP: 2047 | AR:  101 | DR:          0 | IR: 03000065 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: PUSH #1 | IO: -
+TICK:   17 | PC:   4 | SP: 2047 | AR:    4 | DR:   33554433 | IR: 03000065 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: PUSH #1 | IO: -
+TICK:   18 | PC:   5 | SP: 2047 | AR:    4 | DR:   33554433 | IR: 02000001 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   5 | SIG: LATCH_DR_ARG | INS: PUSH #1 | IO: -
+TICK:   19 | PC:   5 | SP: 2047 | AR:    4 | DR:          1 | IR: 02000001 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   6 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH #1 | IO: -
+TICK:   20 | PC:   5 | SP: 2046 | AR: 2046 | DR:          1 | IR: 02000001 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: POP 102 | IO: -
+TICK:   21 | PC:   5 | SP: 2046 | AR:    5 | DR:   50331750 | IR: 02000001 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: POP 102 | IO: -
+TICK:   22 | PC:   6 | SP: 2046 | AR:    5 | DR:   50331750 | IR: 03000066 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   7 | SIG: LATCH_AR_SP,READ | INS: POP 102 | IO: -
+TICK:   23 | PC:   6 | SP: 2046 | AR: 2046 | DR:          1 | IR: 03000066 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   8 | SIG: LATCH_AR_ADDR,WRITE,LATCH_SP_INC | INS: POP 102 | IO: -
+TICK:   24 | PC:   6 | SP: 2047 | AR:  102 | DR:          1 | IR: 03000066 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: PUSH #0 | IO: -
+TICK:   25 | PC:   6 | SP: 2047 | AR:    6 | DR:   33554432 | IR: 03000066 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: PUSH #0 | IO: -
+TICK:   26 | PC:   7 | SP: 2047 | AR:    6 | DR:   33554432 | IR: 02000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   5 | SIG: LATCH_DR_ARG | INS: PUSH #0 | IO: -
+TICK:   27 | PC:   7 | SP: 2047 | AR:    6 | DR:          0 | IR: 02000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   6 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH #0 | IO: -
+TICK:   28 | PC:   7 | SP: 2046 | AR: 2046 | DR:          0 | IR: 02000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: POP 103 | IO: -
+TICK:   29 | PC:   7 | SP: 2046 | AR:    7 | DR:   50331751 | IR: 02000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: POP 103 | IO: -
+TICK:   30 | PC:   8 | SP: 2046 | AR:    7 | DR:   50331751 | IR: 03000067 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   7 | SIG: LATCH_AR_SP,READ | INS: POP 103 | IO: -
+TICK:   31 | PC:   8 | SP: 2046 | AR: 2046 | DR:          0 | IR: 03000067 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   8 | SIG: LATCH_AR_ADDR,WRITE,LATCH_SP_INC | INS: POP 103 | IO: -
+TICK:   32 | PC:   8 | SP: 2047 | AR:  103 | DR:          0 | IR: 03000067 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: PUSH_ADDR 100 | IO: -
+TICK:   33 | PC:   8 | SP: 2047 | AR:    8 | DR:   16777316 | IR: 03000067 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: PUSH_ADDR 100 | IO: -
+TICK:   34 | PC:   9 | SP: 2047 | AR:    8 | DR:   16777316 | IR: 01000064 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   3 | SIG: LATCH_AR_ADDR,READ | INS: PUSH_ADDR 100 | IO: -
+TICK:   35 | PC:   9 | SP: 2047 | AR:  100 | DR:    1048575 | IR: 01000064 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   4 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH_ADDR 100 | IO: -
+TICK:   36 | PC:   9 | SP: 2046 | AR: 2046 | DR:    1048575 | IR: 01000064 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ | INS: PUSH_ADDR 102 | IO: -
+TICK:   37 | PC:   9 | SP: 2046 | AR:    9 | DR:   16777318 | IR: 01000064 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   1 | SIG: LATCH_IR,LATCH_PC | INS: PUSH_ADDR 102 | IO: -
+TICK:   38 | PC:  10 | SP: 2046 | AR:    9 | DR:   16777318 | IR: 01000066 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   3 | SIG: LATCH_AR_ADDR,READ | INS: PUSH_ADDR 102 | IO: -
+TICK:   39 | PC:  10 | SP: 2046 | AR:  102 | DR:          1 | IR: 01000066 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   4 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH_ADDR 102 | IO: -

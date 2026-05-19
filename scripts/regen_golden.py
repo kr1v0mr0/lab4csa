@@ -55,6 +55,7 @@ def main() -> None:
             55,
         ),
         ("vector", "src/examples/vector.asm", None, 35),
+        ("vector_ops", "src/examples/vector_ops.asm", None, 80),
     ]
     for name, asm, inp, tn in scenarios:
         write_golden(name, asm, inp, tn)

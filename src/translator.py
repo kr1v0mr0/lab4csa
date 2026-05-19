@@ -10,6 +10,20 @@ from opcodes import OPCODES
 
 VREGS = {"V0": 0, "V1": 1, "V2": 2, "V3": 3}
 NOP_WORD = OPCODES["NOP"] << 24
+NO_OPERAND_COMMANDS = {
+    "NOP",
+    "HALT",
+    "DROP",
+    "DUP",
+    "RET",
+    "IEXEC",
+    "ADD",
+    "SUB",
+    "MUL",
+    "DIV",
+    "MOD",
+    "CMP",
+}
 
 
 def strip_line_comment(code_line: str) -> str:
@@ -245,6 +259,23 @@ def step1(
     return labels, equates, cleaned
 
 
+def parse_operand(value: str, labels: dict[str, int], equates: dict[str, int]) -> int:
+    if value.startswith("#"):
+        return int(value[1:], 0)
+    if value.upper() in equates:
+        return equates[value.upper()]
+    if value in labels:
+        return labels[value]
+    return int(value, 0)
+
+
+def parse_vreg(value: str) -> int:
+    try:
+        return VREGS[value.upper()]
+    except KeyError as e:
+        raise ValueError(f"неизвестный векторный регистр: {value}") from e
+
+
 def step2(
     instructions: list[str], labels: dict[str, int], equates: dict[str, int]
 ) -> tuple[list[int], list[str]]:
@@ -300,50 +331,33 @@ def step2(
         fp = OPCODES[cmd]
 
         if len(q) == 1:
-            no_arg = (
-                "NOP",
-                "HALT",
-                "DROP",
-                "DUP",
-                "RET",
-                "IEXEC",
-                "ADD",
-                "SUB",
-                "MUL",
-                "DIV",
-                "MOD",
-                "CMP",
-            )
-            if cmd not in no_arg:
+            if cmd not in NO_OPERAND_COMMANDS:
                 raise ValueError(f"command {cmd} requires operands")
 
         if len(q) == 2:
             val = q[1]
-            if val.startswith("#"):
-                arg = int(val[1:], 0)
-            elif val.upper() in equates:
-                arg = equates[val.upper()]
-            elif val in labels:
-                arg = labels[val]
-            elif val.upper() in VREGS:
-                final = VREGS[val.upper()] << 20
+            if val.upper() in VREGS:
+                final = parse_vreg(val) << 20
             else:
-                try:
-                    arg = int(val)
-                except ValueError as e:
-                    raise ValueError(f"Ошибка в аргументе: {val}") from e
+                arg = parse_operand(val, labels, equates)
+
+        elif len(q) == 3 and cmd == "V_CMP":
+            v1 = parse_vreg(q[1])
+            v2 = parse_vreg(q[2])
+            arg = (v1 << 18) | (v2 << 16)
 
         elif len(q) == 3:
-            res = VREGS[q[1].upper()]
+            res = parse_vreg(q[1])
             final = res << 20
-            r = q[2]
-            arg = equates[r.upper()] if r.upper() in equates else int(r)
+            arg = parse_operand(q[2], labels, equates)
 
         elif len(q) == 4:
-            res = VREGS[q[1].upper()]
-            v1 = VREGS[q[2].upper()]
-            v2 = VREGS[q[3].upper()]
+            res = parse_vreg(q[1])
+            v1 = parse_vreg(q[2])
+            v2 = parse_vreg(q[3])
             final = (res << 20) | (v1 << 18) | (v2 << 16)
+        elif len(q) > 4:
+            raise ValueError(f"слишком много операндов: {inst}")
 
         code = (fp << 24) | final | (arg & 0xFFFFF)
         addr = len(binary)

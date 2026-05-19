@@ -29,6 +29,7 @@ GOLDEN_SCENARIOS: list[tuple[str, str, str | None, int]] = [
         55,
     ),
     ("vector", "src/examples/vector.asm", None, 35),
+    ("vector_ops", "src/examples/vector_ops.asm", None, 80),
 ]
 
 

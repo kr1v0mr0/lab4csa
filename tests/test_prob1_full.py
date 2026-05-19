@@ -1,4 +1,4 @@
-"""Полный prob1.asm: проверка только вывода (≈10.4M тактов)."""
+"""Полный prob1.asm: проверка только вывода (≈5.2M тактов)."""
 
 from __future__ import annotations
 
@@ -28,4 +28,4 @@ def test_prob1_full_stdout_and_tick_budget() -> None:
         bin_path.unlink(missing_ok=True)
 
     assert out == expected
-    assert 10_000_000 < ticks < 12_000_000, f"ожидан ~10.4M тактов, получено {ticks}"
+    assert 5_000_000 < ticks < 6_000_000, f"ожидан ~5.2M тактов, получено {ticks}"
