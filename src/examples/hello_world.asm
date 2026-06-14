@@ -1,34 +1,40 @@
+.section DATA
+.equ PORT_OUT 1
+h: .word 72
+e: .word 101
+l: .word 108
+o: .word 111
+comma: .word 44
+space: .word 32
+w: .word 87
+r: .word 114
+d: .word 100
+bang: .word 33
+nl: .word 10
+
+.macro PRINT(cell)
+    PUSH_ADDR cell
+    OUT PORT_OUT
+.endm
+
 .section TEXT
 main:
     CALL print_hw
     HALT
+
 print_hw:
-    PUSH #72
-    OUT 1
-    PUSH #101
-    OUT 1
-    PUSH #108
-    OUT 1
-    PUSH #108
-    OUT 1
-    PUSH #111
-    OUT 1
-    PUSH #44
-    OUT 1
-    PUSH #32
-    OUT 1
-    PUSH #87
-    OUT 1
-    PUSH #111
-    OUT 1
-    PUSH #114
-    OUT 1
-    PUSH #108
-    OUT 1
-    PUSH #100
-    OUT 1
-    PUSH #33
-    OUT 1
-    PUSH #10
-    OUT 1
+    PRINT(h)
+    PRINT(e)
+    PRINT(l)
+    PRINT(l)
+    PRINT(o)
+    PRINT(comma)
+    PRINT(space)
+    PRINT(w)
+    PRINT(o)
+    PRINT(r)
+    PRINT(l)
+    PRINT(d)
+    PRINT(bang)
+    PRINT(nl)
     RET

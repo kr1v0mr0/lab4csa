@@ -10,57 +10,38 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 sys.path.insert(0, str(SRC))
+sys.path.insert(0, str(ROOT))
+
+from scripts.golden_yaml import load_golden_case  # noqa: E402
 
 from machine import run_until_halt_with_trace_prefix  # noqa: E402
 from translator import save_binary, translate_source_lines  # noqa: E402
 
-# (имя каталога в tests/golden, asm, ввод или None, строк трассы)
-GOLDEN_SCENARIOS: list[tuple[str, str, str | None, int]] = [
-    ("hello_world", "src/examples/hello_world.asm", None, 45),
-    ("macro_smoke", "src/examples/macro_smoke.asm", None, 35),
-    ("prob1_smoke", "src/examples/prob1_smoke.asm", None, 40),
-    ("sort", "src/examples/sort.asm", None, 40),
-    ("int64", "src/examples/int64.asm", None, 40),
-    ("cat", "src/examples/cat.asm", "tests/fixtures/cat_input.txt", 40),
-    (
-        "hello_user_name",
-        "src/examples/hello_user_name.asm",
-        "tests/fixtures/hello_user_input.txt",
-        55,
-    ),
-    ("vector", "src/examples/vector.asm", None, 35),
-    ("vector_ops", "src/examples/vector_ops.asm", None, 80),
-]
+GOLDEN_CASES = sorted((ROOT / "tests" / "golden").glob("*.yaml"))
 
 
-@pytest.mark.parametrize("name, asm, inp, trace_n", GOLDEN_SCENARIOS)
+@pytest.mark.parametrize("case_path", GOLDEN_CASES, ids=lambda p: p.stem)
 def test_golden_full_chain(
-    name: str,
-    asm: str,
-    inp: str | None,
-    trace_n: int,
+    case_path: Path,
     tmp_path: Path,
 ) -> None:
-    gold = ROOT / "tests" / "golden" / name
-    exp_out = (gold / "expect.stdout").read_text(encoding="utf-8")
-    exp_lst = (gold / "expect.lst").read_text(encoding="utf-8")
-    exp_tr = (gold / "expect.trace.txt").read_text(encoding="utf-8")
+    case = load_golden_case(case_path)
+    name = case_path.stem
 
-    asm_path = ROOT / asm
-    raw = asm_path.read_text(encoding="utf-8").splitlines(keepends=True)
+    raw = case.in_source.splitlines(keepends=True)
     binary, listing_lines = translate_source_lines(raw)
     lst_actual = "\n".join(listing_lines) + ("\n" if listing_lines else "")
-    assert lst_actual == exp_lst, f"{name}: листинг не совпадает с эталоном"
+    assert lst_actual == case.out_code_hex, f"{name}: листинг не совпадает с эталоном"
 
     bin_path = tmp_path / f"{name}.bin"
     save_binary(str(bin_path), binary)
-    input_data = ""
-    if inp:
-        input_data = (ROOT / inp).read_text(encoding="utf-8")
+    assert bin_path.read_bytes() == case.out_code, f"{name}: машинный код"
+
+    trace_lines = len(case.out_log.splitlines())
     out, _ticks, trace = run_until_halt_with_trace_prefix(
         str(bin_path),
-        input_data,
-        trace_prefix_lines=trace_n,
+        case.in_stdin,
+        trace_prefix_lines=trace_lines,
     )
-    assert out == exp_out, f"{name}: stdout"
-    assert trace == exp_tr, f"{name}: префикс трассы"
+    assert out == case.out_stdout, f"{name}: stdout"
+    assert trace == case.out_log, f"{name}: префикс трассы"

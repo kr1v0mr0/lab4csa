@@ -28,4 +28,4 @@ def test_prob1_full_stdout_and_tick_budget() -> None:
         bin_path.unlink(missing_ok=True)
 
     assert out == expected
-    assert 5_000_000 < ticks < 6_000_000, f"ожидан ~5.2M тактов, получено {ticks}"
+    assert 3_500_000 < ticks < 4_500_000, f"ожидан ~3.9M тактов, получено {ticks}"

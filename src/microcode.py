@@ -49,8 +49,7 @@ def program(mnemonic: str, *words: MicroWord) -> MicroProgram:
 
 
 FETCH_PROGRAM: tuple[MicroWord, ...] = (
-    (Signal.LATCH_AR_PC, Signal.READ),
-    (Signal.LATCH_IR, Signal.LATCH_PC),
+    (Signal.LATCH_AR_PC, Signal.READ, Signal.LATCH_IR, Signal.LATCH_PC),
 )
 
 

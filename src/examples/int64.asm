@@ -1,49 +1,69 @@
+.section DATA
+.equ PORT_OUT 1
+a_lo: .word 0xFFFFF
+a_hi: .word 0
+b_lo: .word 1
+b_hi: .word 0
+r_lo: .word 0
+r_hi: .word 0
+carry: .word 0
+word_base: .word 0x100000
+
+.macro PRINT_CHAR(value)
+    PUSH #value
+    OUT PORT_OUT
+.endm
+
 .section TEXT
-.equ A_LO 100
-.equ A_HI 101
-.equ B_LO 102
-.equ B_HI 103
-.equ R_LO 104
-.equ R_HI 105
-.equ CARRY 106
 main:
-    PUSH #0xFFFFF
-    POP A_LO
-    PUSH #0
-    POP A_HI
+    PUSH_ADDR a_lo
+    PUSH_ADDR b_lo
+    ADD
+    POP r_lo
+
+    PUSH_ADDR r_lo
+    PUSH_ADDR word_base
+    SUB
+    JN no_carry
+
+    PUSH_ADDR r_lo
+    PUSH_ADDR word_base
+    SUB
+    POP r_lo
     PUSH #1
-    POP B_LO
+    POP carry
+    JMP add_high
+
+no_carry:
     PUSH #0
-    POP B_HI
-    PUSH_ADDR A_LO
-    PUSH_ADDR B_LO
+    POP carry
+
+add_high:
+    PUSH_ADDR a_hi
+    PUSH_ADDR b_hi
     ADD
-    POP R_LO
-    PUSH #1
-    POP CARRY
-    PUSH_ADDR A_HI
-    PUSH_ADDR B_HI
+    PUSH_ADDR carry
     ADD
-    PUSH_ADDR CARRY
-    ADD
-    POP R_HI
+    POP r_hi
+
     CALL check_ok
     HALT
+
 check_ok:
-    PUSH_ADDR R_HI
+    PUSH_ADDR r_hi
     PUSH #1
     CMP
     JNZ bad
-    PUSH #79
-    OUT 1
-    PUSH #75
-    OUT 1
-    PUSH #10
-    OUT 1
+    PUSH_ADDR r_lo
+    PUSH #0
+    CMP
+    JNZ bad
+    PRINT_CHAR(79)
+    PRINT_CHAR(75)
+    PRINT_CHAR(10)
     RET
+
 bad:
-    PUSH #88
-    OUT 1
-    PUSH #10
-    OUT 1
+    PRINT_CHAR(88)
+    PRINT_CHAR(10)
     RET

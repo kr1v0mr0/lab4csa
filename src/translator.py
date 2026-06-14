@@ -67,6 +67,19 @@ class _IfFrame:
     in_else: bool = False
 
 
+@dataclass(frozen=True)
+class Macro:
+    params: list[str]
+    body: list[str]
+
+
+@dataclass(frozen=True)
+class SectionItem:
+    section: str
+    label: str | None
+    stmt: str
+
+
 def _emitting_if(stack: list[_IfFrame]) -> bool:
     for f in stack:
         branch = (f.allowed and not f.cond) if f.in_else else (f.allowed and f.cond)
@@ -124,17 +137,53 @@ def preprocess_conditional(lines: list[str]) -> list[str]:
     return out
 
 
-def extract_macros(lines: list[str]) -> tuple[dict[str, list[str]], list[str]]:
-    macros: dict[str, list[str]] = {}
+def _split_macro_args(arg_text: str) -> list[str]:
+    args: list[str] = []
+    cur: list[str] = []
+    depth = 0
+    in_quote = False
+    for ch in arg_text:
+        if ch == '"':
+            in_quote = not in_quote
+            cur.append(ch)
+            continue
+        if not in_quote and ch == "(":
+            depth += 1
+        elif not in_quote and ch == ")":
+            depth -= 1
+        if not in_quote and ch == "," and depth == 0:
+            arg = "".join(cur).strip()
+            if arg:
+                args.append(arg)
+            cur = []
+            continue
+        cur.append(ch)
+    arg = "".join(cur).strip()
+    if arg:
+        args.append(arg)
+    return args
+
+
+def _parse_macro_header(header: str) -> tuple[str, list[str]]:
+    rest = header.split(None, 1)
+    if len(rest) != 2:
+        raise ValueError(".macro ИМЯ")
+    spec = rest[1].strip()
+    match = re.fullmatch(r"([A-Za-z_][\w]*)\s*\((.*)\)", spec)
+    if match:
+        return match.group(1).upper(), _split_macro_args(match.group(2))
+    parts = spec.replace(",", " ").split()
+    return parts[0].upper(), parts[1:]
+
+
+def extract_macros(lines: list[str]) -> tuple[dict[str, Macro], list[str]]:
+    macros: dict[str, Macro] = {}
     out_code: list[str] = []
     i = 0
     while i < len(lines):
         s = strip_line_comment(lines[i]).strip()
         if s.upper().startswith(".MACRO"):
-            parts = s.split()
-            if len(parts) < 2:
-                raise ValueError(".macro ИМЯ")
-            name = parts[1].upper()
+            name, params = _parse_macro_header(s)
             if name in macros:
                 raise ValueError(f"повторное определение макроса {name}")
             i += 1
@@ -149,7 +198,7 @@ def extract_macros(lines: list[str]) -> tuple[dict[str, list[str]], list[str]]:
                 i += 1
             else:
                 raise ValueError(".macro без .endm")
-            macros[name] = body
+            macros[name] = Macro(params, body)
             continue
         if s:
             out_code.append(s)
@@ -160,17 +209,41 @@ def extract_macros(lines: list[str]) -> tuple[dict[str, list[str]], list[str]]:
 _BACKREF = re.compile(r"\\(\d)")
 
 
-def _apply_macro_args(template: str, args: list[str]) -> str:
+def _apply_macro_args(template: str, macro: Macro, args: list[str]) -> str:
+    if macro.params and len(args) != len(macro.params):
+        raise ValueError(
+            f"макрос ожидает {len(macro.params)} арг., получено {len(args)}"
+        )
+
     def repl(mo: re.Match[str]) -> str:
         idx = int(mo.group(1)) - 1
         if idx < 0 or idx >= len(args):
             raise ValueError(f"нет аргумента \\{idx + 1} для макроса")
         return args[idx]
 
-    return _BACKREF.sub(repl, template)
+    expanded = _BACKREF.sub(repl, template)
+    for name, value in zip(macro.params, args, strict=False):
+        expanded = re.sub(rf"(?<!\w){re.escape(name)}(?!\w)", value, expanded)
+    return expanded
 
 
-def expand_macros(lines: list[str], macros: dict[str, list[str]]) -> list[str]:
+def _parse_macro_call(stmt: str, macros: dict[str, Macro]) -> tuple[str, list[str]] | None:
+    paren = re.fullmatch(r"([A-Za-z_][\w]*)\s*\((.*)\)", stmt.strip())
+    if paren and paren.group(1).upper() in macros:
+        return paren.group(1).upper(), _split_macro_args(paren.group(2))
+
+    parts = stmt.split(None, 1)
+    if not parts:
+        return None
+    name = parts[0].upper()
+    if name not in macros:
+        return None
+    if len(parts) == 1:
+        return name, []
+    return name, _split_macro_args(parts[1])
+
+
+def expand_macros(lines: list[str], macros: dict[str, Macro]) -> list[str]:
     q: deque[str] = deque(lines)
     final: list[str] = []
     while q:
@@ -181,24 +254,20 @@ def expand_macros(lines: list[str], macros: dict[str, list[str]]) -> list[str]:
             if not rest:
                 final.append(f"{lab}:")
                 continue
-            first = rest.split(None, 1)[0].upper()
-            if first in macros:
+            if _parse_macro_call(rest, macros) is not None:
                 raise ValueError("вызов макроса в строке с меткой не поддержан")
             final.append(f"{lab}: {rest}")
             continue
 
-        parts = rest.split()
-        if not parts:
-            continue
-        name = parts[0].upper()
-        if name not in macros:
+        call = _parse_macro_call(rest, macros)
+        if call is None:
             final.append(rest)
             continue
 
-        args = parts[1:]
-        body = macros[name]
-        for bl in reversed(body):
-            q.appendleft(_apply_macro_args(bl, args))
+        name, args = call
+        macro = macros[name]
+        for bl in reversed(macro.body):
+            q.appendleft(_apply_macro_args(bl, macro, args))
     return final
 
 
@@ -210,54 +279,90 @@ def preprocess_all(raw_lines: list[str]) -> list[str]:
     return code
 
 
+def _section_name(stmt: str) -> str | None:
+    upper = stmt.upper()
+    if upper == ".TEXT":
+        return "TEXT"
+    if upper == ".DATA":
+        return "DATA"
+    if upper.startswith(".SECTION"):
+        parts = stmt.split()
+        return parts[1].upper() if len(parts) > 1 else "TEXT"
+    return None
+
+
+def _ordered_sections(items: list[SectionItem]) -> list[str]:
+    seen = {item.section for item in items}
+    order = [name for name in ("TEXT", "DATA") if name in seen]
+    order.extend(sorted(seen - set(order)))
+    return order
+
+
+def _item_size(stmt: str) -> int:
+    upper = stmt.upper()
+    if upper.startswith(".EQU") or upper.startswith(".ORG"):
+        return 0
+    if upper.startswith(".ASCIZ"):
+        content = stmt.split('"')
+        if len(content) < 2:
+            raise ValueError('.asciz "..."')
+        return len(content[1]) + 1
+    return 1
+
+
 def step1(
     lines: list[str],
 ) -> tuple[dict[str, int], dict[str, int], list[str]]:
     labels: dict[str, int] = {}
+    seen_labels: set[str] = set()
     equates: dict[str, int] = {}
-    cleaned: list[str] = []
-    ac = 0
+    items: list[SectionItem] = []
+    section = "TEXT"
     for line in lines:
         s = strip_line_comment(line).strip()
         if not s:
             continue
 
+        sec = _section_name(s)
+        if sec is not None:
+            section = sec
+            continue
+
         lab, stmt = split_label_and_rest(s)
         if lab is not None:
-            if lab in labels:
+            if lab in seen_labels:
                 raise ValueError("Такая метка уже существует")
-            labels[lab] = ac
-            if not stmt:
+            seen_labels.add(lab)
+            items.append(SectionItem(section, lab, stmt))
+            continue
+        items.append(SectionItem(section, None, s))
+
+    cleaned: list[str] = []
+    ac = 0
+    for sec in _ordered_sections(items):
+        for item in (it for it in items if it.section == sec):
+            if item.label is not None:
+                labels[item.label] = ac
+            s = item.stmt
+            if not s:
                 continue
-            s = stmt
 
-        if s.upper().startswith(".EQU"):
-            parts = s.split()
-            if len(parts) != 3:
-                raise ValueError(".equ ИМЯ ЧИСЛО")
-            equates[parts[1].upper()] = int(parts[2])
-        elif s.upper().startswith(".SECTION"):
-            parts = s.split()
-            sec = parts[1].upper() if len(parts) > 1 else "TEXT"
-            cleaned.append(f"__SECTION__ {sec}")
-        elif s.upper().startswith(".ORG"):
-            parts = s.split()
-            if len(parts) != 2:
-                raise ValueError(".org требует ровно один числовой аргумент")
-            n = int(parts[1])
-            cleaned.append(f"__ORG__ {n}")
-            ac = n
-        elif s.upper().startswith(".ASCIZ"):
-            cleaned.append(s)
-            content = s.split('"')
-            if len(content) < 2:
-                raise ValueError(".asciz \"...\"")
-            ac += len(content[1]) + 1
-        else:
-            cleaned.append(s)
-            ac += 1
+            if s.upper().startswith(".EQU"):
+                parts = s.split()
+                if len(parts) != 3:
+                    raise ValueError(".equ ИМЯ ЧИСЛО")
+                equates[parts[1].upper()] = int(parts[2], 0)
+            elif s.upper().startswith(".ORG"):
+                parts = s.split()
+                if len(parts) != 2:
+                    raise ValueError(".org требует ровно один числовой аргумент")
+                n = int(parts[1], 0)
+                cleaned.append(f"__ORG__ {n}")
+                ac = n
+            else:
+                cleaned.append(s)
+                ac += _item_size(s)
     return labels, equates, cleaned
-
 
 def parse_operand(value: str, labels: dict[str, int], equates: dict[str, int]) -> int:
     if value.startswith("#"):
@@ -323,6 +428,15 @@ def step2(
             addr = len(binary)
             emit(addr, 0, ".asciz NUL")
             binary.append(0)
+            continue
+
+        if cmd == ".WORD":
+            if len(q) != 2:
+                raise ValueError(".word требует ровно один аргумент")
+            addr = len(binary)
+            code = parse_operand(q[1], labels, equates) & 0xFFFFFFFF
+            emit(addr, code, f".word {q[1]}")
+            binary.append(code)
             continue
 
         if cmd not in OPCODES:

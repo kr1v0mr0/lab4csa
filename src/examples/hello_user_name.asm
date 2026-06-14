@@ -1,93 +1,94 @@
-.section TEXT
+.section DATA
 .equ PORT_IN 0
 .equ PORT_OUT 1
-.equ NL 10
+w: .word 87
+h: .word 104
+a: .word 97
+l: .word 108
+t: .word 116
+space: .word 32
+i: .word 105
+s: .word 115
+y: .word 121
+o: .word 111
+u: .word 117
+r: .word 114
+n: .word 110
+m: .word 109
+e: .word 101
+question: .word 63
+nl: .word 10
+cap_h: .word 72
+comma: .word 44
+bang: .word 33
+name0: .word 0
+name1: .word 0
+name2: .word 0
+name3: .word 0
+name4: .word 0
+
+.macro PRINT(cell)
+    PUSH_ADDR cell
+    OUT PORT_OUT
+.endm
+
+.macro READ_TO(cell)
+    IN PORT_IN
+    POP cell
+.endm
+
+.section TEXT
 main:
     CALL prompt
     CALL read_name
     CALL greet
     HALT
+
 prompt:
-    PUSH #87
-    OUT PORT_OUT
-    PUSH #104
-    OUT PORT_OUT
-    PUSH #97
-    OUT PORT_OUT
-    PUSH #116
-    OUT PORT_OUT
-    PUSH #32
-    OUT PORT_OUT
-    PUSH #105
-    OUT PORT_OUT
-    PUSH #115
-    OUT PORT_OUT
-    PUSH #32
-    OUT PORT_OUT
-    PUSH #121
-    OUT PORT_OUT
-    PUSH #111
-    OUT PORT_OUT
-    PUSH #117
-    OUT PORT_OUT
-    PUSH #114
-    OUT PORT_OUT
-    PUSH #32
-    OUT PORT_OUT
-    PUSH #110
-    OUT PORT_OUT
-    PUSH #97
-    OUT PORT_OUT
-    PUSH #109
-    OUT PORT_OUT
-    PUSH #101
-    OUT PORT_OUT
-    PUSH #63
-    OUT PORT_OUT
-    PUSH #10
-    OUT PORT_OUT
+    PRINT(w)
+    PRINT(h)
+    PRINT(a)
+    PRINT(t)
+    PRINT(space)
+    PRINT(i)
+    PRINT(s)
+    PRINT(space)
+    PRINT(y)
+    PRINT(o)
+    PRINT(u)
+    PRINT(r)
+    PRINT(space)
+    PRINT(n)
+    PRINT(a)
+    PRINT(m)
+    PRINT(e)
+    PRINT(question)
+    PRINT(nl)
     RET
+
 read_name:
-    IN PORT_IN
-    POP 300
-    IN PORT_IN
-    POP 301
-    IN PORT_IN
-    POP 302
-    IN PORT_IN
-    POP 303
-    IN PORT_IN
-    POP 304
+    READ_TO(name0)
+    READ_TO(name1)
+    READ_TO(name2)
+    READ_TO(name3)
+    READ_TO(name4)
     IN PORT_IN
     DROP
     RET
+
 greet:
-    PUSH #72
-    OUT PORT_OUT
-    PUSH #101
-    OUT PORT_OUT
-    PUSH #108
-    OUT PORT_OUT
-    PUSH #108
-    OUT PORT_OUT
-    PUSH #111
-    OUT PORT_OUT
-    PUSH #44
-    OUT PORT_OUT
-    PUSH #32
-    OUT PORT_OUT
-    PUSH_ADDR 300
-    OUT PORT_OUT
-    PUSH_ADDR 301
-    OUT PORT_OUT
-    PUSH_ADDR 302
-    OUT PORT_OUT
-    PUSH_ADDR 303
-    OUT PORT_OUT
-    PUSH_ADDR 304
-    OUT PORT_OUT
-    PUSH #33
-    OUT PORT_OUT
-    PUSH #10
-    OUT PORT_OUT
+    PRINT(cap_h)
+    PRINT(e)
+    PRINT(l)
+    PRINT(l)
+    PRINT(o)
+    PRINT(comma)
+    PRINT(space)
+    PRINT(name0)
+    PRINT(name1)
+    PRINT(name2)
+    PRINT(name3)
+    PRINT(name4)
+    PRINT(bang)
+    PRINT(nl)
     RET

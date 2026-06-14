@@ -1,91 +1,100 @@
-; укороченный prob1 для CI (малые границы циклов)
-init:
-    PUSH #0
-    POP 102
-    PUSH #12
-    POP 100
+.section DATA
+.equ PORT_OUT 1
+best: .word 0
+i: .word 12
+j: .word 0
+prod: .word 0
+n: .word 0
+rev: .word 0
 
+.macro STORE_IMM(cell, value)
+    PUSH #value
+    POP cell
+.endm
+
+.macro PRINT_IMM(value)
+    PUSH #value
+    OUT PORT_OUT
+.endm
+
+.section TEXT
 outer_loop:
-    PUSH_ADDR 100
+    PUSH_ADDR i
     PUSH #8
     CMP
     JZ finish
 
-    PUSH #11
-    POP 101
+    STORE_IMM(j, 11)
 
 inner_loop:
-    PUSH_ADDR 101
+    PUSH_ADDR j
     PUSH #8
     CMP
     JZ next_i
 
-    PUSH_ADDR 100
-    PUSH_ADDR 101
+    PUSH_ADDR i
+    PUSH_ADDR j
     MUL
-    POP 103
+    POP prod
 
-    PUSH_ADDR 103
-    POP 104
-    PUSH #0
-    POP 105
+    PUSH_ADDR prod
+    POP n
+    STORE_IMM(rev, 0)
 
 reverse_loop:
-    PUSH_ADDR 104
+    PUSH_ADDR n
     PUSH #0
     CMP
     JZ check_pal
 
-    PUSH_ADDR 105
+    PUSH_ADDR rev
     PUSH #10
     MUL
-    PUSH_ADDR 104
+    PUSH_ADDR n
     PUSH #10
     MOD
     ADD
-    POP 105
+    POP rev
 
-    PUSH_ADDR 104
+    PUSH_ADDR n
     PUSH #10
     DIV
-    POP 104
+    POP n
     JMP reverse_loop
 
 check_pal:
-    PUSH_ADDR 105
-    PUSH_ADDR 103
+    PUSH_ADDR rev
+    PUSH_ADDR prod
     CMP
     JNZ next_j
 
-    PUSH_ADDR 103
-    OUT 1
-    PUSH #10
-    OUT 1
+    PUSH_ADDR prod
+    OUT PORT_OUT
+    PRINT_IMM(10)
 
-    PUSH_ADDR 103
-    PUSH_ADDR 102
+    PUSH_ADDR prod
+    PUSH_ADDR best
     SUB
     JN next_j
-    PUSH_ADDR 103
-    POP 102
+    PUSH_ADDR prod
+    POP best
 
 next_j:
-    PUSH_ADDR 101
+    PUSH_ADDR j
     PUSH #1
     SUB
-    POP 101
+    POP j
     JMP inner_loop
 
 next_i:
-    PUSH_ADDR 100
+    PUSH_ADDR i
     PUSH #1
     SUB
-    POP 100
+    POP i
     JMP outer_loop
 
 finish:
-    PUSH #61
-    OUT 1
-    PUSH_ADDR 102
-    OUT 1
+    PRINT_IMM(61)
+    PUSH_ADDR best
+    OUT PORT_OUT
     HALT

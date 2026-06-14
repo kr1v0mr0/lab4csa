@@ -1,0 +1,225 @@
+in_source: |
+  .section DATA
+  .equ PORT_OUT 1
+  best: .word 0
+  i: .word 12
+  j: .word 0
+  prod: .word 0
+  n: .word 0
+  rev: .word 0
+  
+  .macro STORE_IMM(cell, value)
+      PUSH #value
+      POP cell
+  .endm
+  
+  .macro PRINT_IMM(value)
+      PUSH #value
+      OUT PORT_OUT
+  .endm
+  
+  .section TEXT
+  outer_loop:
+      PUSH_ADDR i
+      PUSH #8
+      CMP
+      JZ finish
+  
+      STORE_IMM(j, 11)
+  
+  inner_loop:
+      PUSH_ADDR j
+      PUSH #8
+      CMP
+      JZ next_i
+  
+      PUSH_ADDR i
+      PUSH_ADDR j
+      MUL
+      POP prod
+  
+      PUSH_ADDR prod
+      POP n
+      STORE_IMM(rev, 0)
+  
+  reverse_loop:
+      PUSH_ADDR n
+      PUSH #0
+      CMP
+      JZ check_pal
+  
+      PUSH_ADDR rev
+      PUSH #10
+      MUL
+      PUSH_ADDR n
+      PUSH #10
+      MOD
+      ADD
+      POP rev
+  
+      PUSH_ADDR n
+      PUSH #10
+      DIV
+      POP n
+      JMP reverse_loop
+  
+  check_pal:
+      PUSH_ADDR rev
+      PUSH_ADDR prod
+      CMP
+      JNZ next_j
+  
+      PUSH_ADDR prod
+      OUT PORT_OUT
+      PRINT_IMM(10)
+  
+      PUSH_ADDR prod
+      PUSH_ADDR best
+      SUB
+      JN next_j
+      PUSH_ADDR prod
+      POP best
+  
+  next_j:
+      PUSH_ADDR j
+      PUSH #1
+      SUB
+      POP j
+      JMP inner_loop
+  
+  next_i:
+      PUSH_ADDR i
+      PUSH #1
+      SUB
+      POP i
+      JMP outer_loop
+  
+  finish:
+      PRINT_IMM(61)
+      PUSH_ADDR best
+      OUT PORT_OUT
+      HALT
+in_stdin: |-
+out_code: !!binary |
+  AQAAQQIAAAgLAAAAEQAAOwIAAAsDAABCAQAAQgIAAAgLAAAAEQAANgEAAEEBAABCCAAAAAMAAEMB
+  AABDAwAARAIAAAADAABFAQAARAIAAAALAAAAEQAAIwEAAEUCAAAKCAAAAAEAAEQCAAAKCgAAAAYA
+  AAADAABFAQAARAIAAAoJAAAAAwAARBAAABIBAABFAQAAQwsAAAASAAAxAQAAQxUAAAECAAAKFQAA
+  AQEAAEMBAABABwAAABYAADEBAABDAwAAQAEAAEICAAABBwAAAAMAAEIQAAAGAQAAQQIAAAEHAAAA
+  AwAAQRAAAAACAAA9FQAAAQEAAEAVAAABEwAAAAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAAA==
+out_code_hex: |
+  0 - 01000041 - PUSH_ADDR i  (outer_loop)
+  1 - 02000008 - PUSH #8
+  2 - 0B000000 - CMP
+  3 - 1100003B - JZ finish
+  4 - 0200000B - PUSH #11
+  5 - 03000042 - POP j
+  6 - 01000042 - PUSH_ADDR j  (inner_loop)
+  7 - 02000008 - PUSH #8
+  8 - 0B000000 - CMP
+  9 - 11000036 - JZ next_i
+  10 - 01000041 - PUSH_ADDR i
+  11 - 01000042 - PUSH_ADDR j
+  12 - 08000000 - MUL
+  13 - 03000043 - POP prod
+  14 - 01000043 - PUSH_ADDR prod
+  15 - 03000044 - POP n
+  16 - 02000000 - PUSH #0
+  17 - 03000045 - POP rev
+  18 - 01000044 - PUSH_ADDR n  (reverse_loop)
+  19 - 02000000 - PUSH #0
+  20 - 0B000000 - CMP
+  21 - 11000023 - JZ check_pal
+  22 - 01000045 - PUSH_ADDR rev
+  23 - 0200000A - PUSH #10
+  24 - 08000000 - MUL
+  25 - 01000044 - PUSH_ADDR n
+  26 - 0200000A - PUSH #10
+  27 - 0A000000 - MOD
+  28 - 06000000 - ADD
+  29 - 03000045 - POP rev
+  30 - 01000044 - PUSH_ADDR n
+  31 - 0200000A - PUSH #10
+  32 - 09000000 - DIV
+  33 - 03000044 - POP n
+  34 - 10000012 - JMP reverse_loop
+  35 - 01000045 - PUSH_ADDR rev  (check_pal)
+  36 - 01000043 - PUSH_ADDR prod
+  37 - 0B000000 - CMP
+  38 - 12000031 - JNZ next_j
+  39 - 01000043 - PUSH_ADDR prod
+  40 - 15000001 - OUT PORT_OUT
+  41 - 0200000A - PUSH #10
+  42 - 15000001 - OUT PORT_OUT
+  43 - 01000043 - PUSH_ADDR prod
+  44 - 01000040 - PUSH_ADDR best
+  45 - 07000000 - SUB
+  46 - 16000031 - JN next_j
+  47 - 01000043 - PUSH_ADDR prod
+  48 - 03000040 - POP best
+  49 - 01000042 - PUSH_ADDR j  (next_j)
+  50 - 02000001 - PUSH #1
+  51 - 07000000 - SUB
+  52 - 03000042 - POP j
+  53 - 10000006 - JMP inner_loop
+  54 - 01000041 - PUSH_ADDR i  (next_i)
+  55 - 02000001 - PUSH #1
+  56 - 07000000 - SUB
+  57 - 03000041 - POP i
+  58 - 10000000 - JMP outer_loop
+  59 - 0200003D - PUSH #61  (finish)
+  60 - 15000001 - OUT PORT_OUT
+  61 - 01000040 - PUSH_ADDR best
+  62 - 15000001 - OUT PORT_OUT
+  63 - 13000000 - HALT
+  64 - 00000000 - .word 0
+  65 - 0000000C - .word 12
+  66 - 00000000 - .word 0
+  67 - 00000000 - .word 0
+  68 - 00000000 - .word 0
+  69 - 00000000 - .word 0
+out_stdout: |-
+  y
+  c
+  c
+  =y
+out_log: |
+  TICK:    0 | PC:   0 | SP: 2047 | AR:    0 | DR:          0 | IR: 00000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: PUSH_ADDR 65 | IO: -
+  TICK:    1 | PC:   1 | SP: 2047 | AR:    0 | DR:   16777281 | IR: 01000041 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   2 | SIG: LATCH_AR_ADDR,READ | INS: PUSH_ADDR 65 | IO: -
+  TICK:    2 | PC:   1 | SP: 2047 | AR:   65 | DR:         12 | IR: 01000041 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   3 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH_ADDR 65 | IO: -
+  TICK:    3 | PC:   1 | SP: 2046 | AR: 2046 | DR:         12 | IR: 01000041 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: PUSH #8 | IO: -
+  TICK:    4 | PC:   2 | SP: 2046 | AR:    1 | DR:   33554440 | IR: 02000008 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   4 | SIG: LATCH_DR_ARG | INS: PUSH #8 | IO: -
+  TICK:    5 | PC:   2 | SP: 2046 | AR:    1 | DR:          8 | IR: 02000008 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   5 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH #8 | IO: -
+  TICK:    6 | PC:   2 | SP: 2045 | AR: 2045 | DR:          8 | IR: 02000008 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: CMP | IO: -
+  TICK:    7 | PC:   3 | SP: 2045 | AR:    2 | DR:  184549376 | IR: 0B000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  26 | SIG: LATCH_AR_SP,READ | INS: CMP | IO: -
+  TICK:    8 | PC:   3 | SP: 2045 | AR: 2045 | DR:          8 | IR: 0B000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  27 | SIG: LATCH_TMP,LATCH_SP_INC,LATCH_AR_SP,READ | INS: CMP | IO: -
+  TICK:    9 | PC:   3 | SP: 2046 | AR: 2046 | DR:         12 | IR: 0B000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  28 | SIG: ALU_SUB,LATCH_SP_INC | INS: CMP | IO: -
+  TICK:   10 | PC:   3 | SP: 2047 | AR: 2046 | DR:         12 | IR: 0B000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: JZ 59 | IO: -
+  TICK:   11 | PC:   4 | SP: 2047 | AR:    3 | DR:  285212731 | IR: 1100003B | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  30 | SIG: LATCH_PC_JMP | INS: JZ 59 | IO: -
+  TICK:   12 | PC:   4 | SP: 2047 | AR:    3 | DR:  285212731 | IR: 1100003B | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: PUSH #11 | IO: -
+  TICK:   13 | PC:   5 | SP: 2047 | AR:    4 | DR:   33554443 | IR: 0200000B | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   4 | SIG: LATCH_DR_ARG | INS: PUSH #11 | IO: -
+  TICK:   14 | PC:   5 | SP: 2047 | AR:    4 | DR:         11 | IR: 0200000B | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   5 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH #11 | IO: -
+  TICK:   15 | PC:   5 | SP: 2046 | AR: 2046 | DR:         11 | IR: 0200000B | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: POP 66 | IO: -
+  TICK:   16 | PC:   6 | SP: 2046 | AR:    5 | DR:   50331714 | IR: 03000042 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   6 | SIG: LATCH_AR_SP,READ | INS: POP 66 | IO: -
+  TICK:   17 | PC:   6 | SP: 2046 | AR: 2046 | DR:         11 | IR: 03000042 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   7 | SIG: LATCH_AR_ADDR,WRITE,LATCH_SP_INC | INS: POP 66 | IO: -
+  TICK:   18 | PC:   6 | SP: 2047 | AR:   66 | DR:         11 | IR: 03000042 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: PUSH_ADDR 66 | IO: -
+  TICK:   19 | PC:   7 | SP: 2047 | AR:    6 | DR:   16777282 | IR: 01000042 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   2 | SIG: LATCH_AR_ADDR,READ | INS: PUSH_ADDR 66 | IO: -
+  TICK:   20 | PC:   7 | SP: 2047 | AR:   66 | DR:         11 | IR: 01000042 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   3 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH_ADDR 66 | IO: -
+  TICK:   21 | PC:   7 | SP: 2046 | AR: 2046 | DR:         11 | IR: 01000042 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: PUSH #8 | IO: -
+  TICK:   22 | PC:   8 | SP: 2046 | AR:    7 | DR:   33554440 | IR: 02000008 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   4 | SIG: LATCH_DR_ARG | INS: PUSH #8 | IO: -
+  TICK:   23 | PC:   8 | SP: 2046 | AR:    7 | DR:          8 | IR: 02000008 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   5 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH #8 | IO: -
+  TICK:   24 | PC:   8 | SP: 2045 | AR: 2045 | DR:          8 | IR: 02000008 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: CMP | IO: -
+  TICK:   25 | PC:   9 | SP: 2045 | AR:    8 | DR:  184549376 | IR: 0B000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  26 | SIG: LATCH_AR_SP,READ | INS: CMP | IO: -
+  TICK:   26 | PC:   9 | SP: 2045 | AR: 2045 | DR:          8 | IR: 0B000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  27 | SIG: LATCH_TMP,LATCH_SP_INC,LATCH_AR_SP,READ | INS: CMP | IO: -
+  TICK:   27 | PC:   9 | SP: 2046 | AR: 2046 | DR:         11 | IR: 0B000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  28 | SIG: ALU_SUB,LATCH_SP_INC | INS: CMP | IO: -
+  TICK:   28 | PC:   9 | SP: 2047 | AR: 2046 | DR:         11 | IR: 0B000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: JZ 54 | IO: -
+  TICK:   29 | PC:  10 | SP: 2047 | AR:    9 | DR:  285212726 | IR: 11000036 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  30 | SIG: LATCH_PC_JMP | INS: JZ 54 | IO: -
+  TICK:   30 | PC:  10 | SP: 2047 | AR:    9 | DR:  285212726 | IR: 11000036 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: PUSH_ADDR 65 | IO: -
+  TICK:   31 | PC:  11 | SP: 2047 | AR:   10 | DR:   16777281 | IR: 01000041 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   2 | SIG: LATCH_AR_ADDR,READ | INS: PUSH_ADDR 65 | IO: -
+  TICK:   32 | PC:  11 | SP: 2047 | AR:   65 | DR:         12 | IR: 01000041 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   3 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH_ADDR 65 | IO: -
+  TICK:   33 | PC:  11 | SP: 2046 | AR: 2046 | DR:         12 | IR: 01000041 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: PUSH_ADDR 66 | IO: -
+  TICK:   34 | PC:  12 | SP: 2046 | AR:   11 | DR:   16777282 | IR: 01000042 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   2 | SIG: LATCH_AR_ADDR,READ | INS: PUSH_ADDR 66 | IO: -
+  TICK:   35 | PC:  12 | SP: 2046 | AR:   66 | DR:         11 | IR: 01000042 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   3 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH_ADDR 66 | IO: -
+  TICK:   36 | PC:  12 | SP: 2045 | AR: 2045 | DR:         11 | IR: 01000042 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: MUL | IO: -
+  TICK:   37 | PC:  13 | SP: 2045 | AR:   12 | DR:  134217728 | IR: 08000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  17 | SIG: LATCH_AR_SP,READ | INS: MUL | IO: -
+  TICK:   38 | PC:  13 | SP: 2045 | AR: 2045 | DR:         11 | IR: 08000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  18 | SIG: LATCH_TMP,LATCH_SP_INC,LATCH_AR_SP,READ | INS: MUL | IO: -
+  TICK:   39 | PC:  13 | SP: 2046 | AR: 2046 | DR:         12 | IR: 08000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  19 | SIG: ALU_MUL,LATCH_DR_ALU,WRITE | INS: MUL | IO: -

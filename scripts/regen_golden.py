@@ -1,64 +1,54 @@
-"""Перегенерация tests/golden/*/expect.* — из корня: python scripts/regen_golden.py"""
+"""Перегенерация tests/golden/*.yaml — из корня: python scripts/regen_golden.py"""
 
 from __future__ import annotations
 
+import struct
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(SRC))
 
+from scripts.golden_yaml import GoldenCase, dump_golden_case, load_golden_case  # noqa: E402
+
 from machine import run_until_halt_with_trace_prefix  # noqa: E402
-from translator import save_binary, translate_source_lines  # noqa: E402
+from translator import translate_source_lines  # noqa: E402
 
 
-def write_golden(
-    name: str,
-    asm_rel: str,
-    input_rel: str | None,
-    trace_lines: int,
-) -> None:
-    asm_path = ROOT / asm_rel
-    raw = asm_path.read_text(encoding="utf-8").splitlines(keepends=True)
+def _binary_bytes(binary: list[int]) -> bytes:
+    return b"".join(struct.pack(">I", code) for code in binary)
+
+
+def write_golden(path: Path) -> None:
+    old = load_golden_case(path)
+    raw = old.in_source.splitlines(keepends=True)
     binary, listing = translate_source_lines(raw)
     bin_path = ROOT / "_golden_tmp.bin"
-    save_binary(str(bin_path), binary)
-    inp = ""
-    if input_rel:
-        inp = (ROOT / input_rel).read_text(encoding="utf-8")
-    out, _ticks, tr = run_until_halt_with_trace_prefix(
-        str(bin_path), inp, trace_prefix_lines=trace_lines
+    bin_path.write_bytes(_binary_bytes(binary))
+    out, ticks, tr = run_until_halt_with_trace_prefix(
+        str(bin_path),
+        old.in_stdin,
+        trace_prefix_lines=len(old.out_log.splitlines()),
     )
-    d = ROOT / "tests" / "golden" / name
-    d.mkdir(parents=True, exist_ok=True)
-    (d / "expect.stdout").write_text(out, encoding="utf-8", newline="\n")
     lst_text = "\n".join(listing) + ("\n" if listing else "")
-    (d / "expect.lst").write_text(lst_text, encoding="utf-8", newline="\n")
-    (d / "expect.trace.txt").write_text(tr, encoding="utf-8", newline="\n")
+    new = GoldenCase(
+        in_source=old.in_source,
+        in_stdin=old.in_stdin,
+        out_code=bin_path.read_bytes(),
+        out_code_hex=lst_text,
+        out_stdout=out,
+        out_log=tr,
+    )
+    path.write_text(dump_golden_case(new), encoding="utf-8", newline="\n")
     bin_path.unlink(missing_ok=True)
-    print(name, "ok", _ticks, "ticks")
+    print(path.stem, "ok", ticks, "ticks")
 
 
 def main() -> None:
-    scenarios = [
-        ("hello_world", "src/examples/hello_world.asm", None, 45),
-        ("macro_smoke", "src/examples/macro_smoke.asm", None, 35),
-        ("prob1_smoke", "src/examples/prob1_smoke.asm", None, 40),
-        ("sort", "src/examples/sort.asm", None, 40),
-        ("int64", "src/examples/int64.asm", None, 40),
-        ("cat", "src/examples/cat.asm", "tests/fixtures/cat_input.txt", 40),
-        (
-            "hello_user_name",
-            "src/examples/hello_user_name.asm",
-            "tests/fixtures/hello_user_input.txt",
-            55,
-        ),
-        ("vector", "src/examples/vector.asm", None, 35),
-        ("vector_ops", "src/examples/vector_ops.asm", None, 80),
-    ]
-    for name, asm, inp, tn in scenarios:
-        write_golden(name, asm, inp, tn)
+    for path in sorted((ROOT / "tests" / "golden").glob("*.yaml")):
+        write_golden(path)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,38 @@
+in_source: |
+  .section DATA
+  .equ PORT_OUT 1
+  letter_b: .word 66
+  letter_c: .word 67
+  
+  .macro EMIT(ch, port)
+      PUSH_ADDR ch
+      OUT port
+  .endm
+  
+  .section TEXT
+  .if 1
+      EMIT(letter_b, PORT_OUT)
+  .else
+      EMIT(letter_c, PORT_OUT)
+  .endif
+      HALT
+in_stdin: |-
+out_code: !!binary |
+  AQAAAxUAAAETAAAAAAAAQgAAAEM=
+out_code_hex: |
+  0 - 01000003 - PUSH_ADDR letter_b
+  1 - 15000001 - OUT PORT_OUT
+  2 - 13000000 - HALT
+  3 - 00000042 - .word 66
+  4 - 00000043 - .word 67
+out_stdout: |-
+  B
+out_log: |
+  TICK:    0 | PC:   0 | SP: 2047 | AR:    0 | DR:          0 | IR: 00000000 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: PUSH_ADDR 3 | IO: -
+  TICK:    1 | PC:   1 | SP: 2047 | AR:    0 | DR:   16777219 | IR: 01000003 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   2 | SIG: LATCH_AR_ADDR,READ | INS: PUSH_ADDR 3 | IO: -
+  TICK:    2 | PC:   1 | SP: 2047 | AR:    3 | DR:         66 | IR: 01000003 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:   3 | SIG: LATCH_SP_DEC,LATCH_AR_SP,WRITE | INS: PUSH_ADDR 3 | IO: -
+  TICK:    3 | PC:   1 | SP: 2046 | AR: 2046 | DR:         66 | IR: 01000003 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: OUT 1 | IO: -
+  TICK:    4 | PC:   2 | SP: 2046 | AR:    1 | DR:  352321537 | IR: 15000001 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  35 | SIG: LATCH_AR_SP,READ | INS: OUT 1 | IO: -
+  TICK:    5 | PC:   2 | SP: 2046 | AR: 2046 | DR:         66 | IR: 15000001 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  36 | SIG: OUT,LATCH_SP_INC | INS: OUT 1 | IO: -
+  TICK:    6 | PC:   2 | SP: 2047 | AR: 2046 | DR:         66 | IR: 15000001 | Z: 0 | N: 0 | STEP: FETCH   | uPC:   0 | SIG: LATCH_AR_PC,READ,LATCH_IR,LATCH_PC | INS: HALT | IO: OUT p1 <- 66
+  TICK:    7 | PC:   3 | SP: 2047 | AR:    2 | DR:  318767104 | IR: 13000000 | Z: 0 | N: 0 | STEP: EXECUTE | uPC:  32 | SIG: HALT | INS: HALT | IO: OUT p1 <- 66

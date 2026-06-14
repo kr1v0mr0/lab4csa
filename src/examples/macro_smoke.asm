@@ -1,12 +1,17 @@
-; демонстрация .macro / .endm и .if / .else / .endif
-.macro EMIT
-PUSH #\1
-OUT 1
+.section DATA
+.equ PORT_OUT 1
+letter_b: .word 66
+letter_c: .word 67
+
+.macro EMIT(ch, port)
+    PUSH_ADDR ch
+    OUT port
 .endm
 
+.section TEXT
 .if 1
-EMIT 66
+    EMIT(letter_b, PORT_OUT)
 .else
-EMIT 67
+    EMIT(letter_c, PORT_OUT)
 .endif
-HALT
+    HALT

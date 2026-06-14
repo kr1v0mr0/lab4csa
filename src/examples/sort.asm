@@ -1,15 +1,33 @@
+.section DATA
+.equ PORT_OUT 1
+m0: .word 2
+m1: .word 3
+m2: .word 1
+swap_tmp: .word 0
+
+.macro SWAP(left, right, tmp)
+    PUSH_ADDR left
+    PUSH_ADDR right
+    POP tmp
+    POP right
+    PUSH_ADDR tmp
+    POP left
+.endm
+
+.macro PRINT_DIGIT(cell)
+    PUSH_ADDR cell
+    PUSH #48
+    ADD
+    OUT PORT_OUT
+.endm
+
+.macro PRINT_CHAR(value)
+    PUSH #value
+    OUT PORT_OUT
+.endm
+
 .section TEXT
-.equ M0 100
-.equ M1 101
-.equ M2 102
-.equ S 120
 main:
-    PUSH #2
-    PUSH #3
-    PUSH #1
-    POP M2
-    POP M1
-    POP M0
     CALL pass01
     CALL pass12
     CALL pass01
@@ -17,57 +35,32 @@ main:
     CALL pass01
     CALL print3
     HALT
+
 pass01:
-    PUSH_ADDR M0
-    PUSH_ADDR M1
+    PUSH_ADDR m0
+    PUSH_ADDR m1
     CMP
     JN p01skip
     JZ p01skip
-    CALL swap01
+    SWAP(m0, m1, swap_tmp)
 p01skip:
     RET
+
 pass12:
-    PUSH_ADDR M1
-    PUSH_ADDR M2
+    PUSH_ADDR m1
+    PUSH_ADDR m2
     CMP
     JN p12skip
     JZ p12skip
-    CALL swap12
+    SWAP(m1, m2, swap_tmp)
 p12skip:
     RET
-swap01:
-    PUSH_ADDR M0
-    PUSH_ADDR M1
-    POP S
-    POP M1
-    PUSH_ADDR S
-    POP M0
-    RET
-swap12:
-    PUSH_ADDR M1
-    PUSH_ADDR M2
-    POP S
-    POP M2
-    PUSH_ADDR S
-    POP M1
-    RET
+
 print3:
-    PUSH_ADDR M0
-    PUSH #48
-    ADD
-    OUT 1
-    PUSH #32
-    OUT 1
-    PUSH_ADDR M1
-    PUSH #48
-    ADD
-    OUT 1
-    PUSH #32
-    OUT 1
-    PUSH_ADDR M2
-    PUSH #48
-    ADD
-    OUT 1
-    PUSH #10
-    OUT 1
+    PRINT_DIGIT(m0)
+    PRINT_CHAR(32)
+    PRINT_DIGIT(m1)
+    PRINT_CHAR(32)
+    PRINT_DIGIT(m2)
+    PRINT_CHAR(10)
     RET
