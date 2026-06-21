@@ -1,0 +1,75 @@
+in_source: |
+  .section DATA
+  .equ PORT_OUT 1
+  letter_b: .word 66
+  slot: .word 0
+  
+  .macro CSTR(label, text)
+  label: .asciz text
+  .endm
+  
+  CSTR(str_with_comma, "M,N")
+  
+  .macro COPY_VALUE
+      PUSH_ADDR \1
+      POP \2
+  .endm
+  
+  .macro EMIT_CELL(cell, port)
+      PUSH_ADDR cell
+      OUT port
+  .endm
+  
+  .macro EMIT_IMM(value, port)
+      PUSH #value
+      OUT port
+  .endm
+  
+  .macro TWICE(action)
+      action
+      action
+  .endm
+  
+  .macro MAYBE_EMIT(flag, value)
+  .if flag
+      EMIT_IMM(value, PORT_OUT)
+  .else
+      EMIT_IMM(88, PORT_OUT)
+  .endif
+  .endm
+  
+  .section TEXT
+  start:
+      COPY_VALUE(letter_b, slot)
+      TWICE(EMIT_IMM(65, PORT_OUT))
+      EMIT_CELL(slot, PORT_OUT)
+      MAYBE_EMIT(1, 67)
+      MAYBE_EMIT(0, 68)
+      HALT
+in_stdin: |-
+out_code: !!binary |
+  AQAADQMAAA4CAABBFQAAAQIAAEEVAAABAQAADhUAAAECAABDFQAAAQIAAFgVAAABEwAAAAAAAEIA
+  AAAAAAAATQAAACwAAABOAAAAAA==
+out_code_hex: |
+  0 - 0100000D - PUSH_ADDR letter_b  (start)
+  1 - 0300000E - POP slot
+  2 - 02000041 - PUSH #65
+  3 - 15000001 - OUT PORT_OUT
+  4 - 02000041 - PUSH #65
+  5 - 15000001 - OUT PORT_OUT
+  6 - 0100000E - PUSH_ADDR slot
+  7 - 15000001 - OUT PORT_OUT
+  8 - 02000043 - PUSH #67
+  9 - 15000001 - OUT PORT_OUT
+  10 - 02000058 - PUSH #88
+  11 - 15000001 - OUT PORT_OUT
+  12 - 13000000 - HALT
+  13 - 00000042 - .word 66
+  14 - 00000000 - .word 0
+  15 - 0000004D - .asciz byte 'M'
+  16 - 0000002C - .asciz byte ','
+  17 - 0000004E - .asciz byte 'N'
+  18 - 00000000 - .asciz NUL
+out_stdout: |-
+  AABCX
+out_log: |-
