@@ -167,12 +167,11 @@ arg[17:16] - второй векторный операнд
 
 | Такт | Сигналы | Действие |
 |------|---------|----------|
-| 1 | `LATCH_AR_PC`, `READ` | `AR <- PC`, `DR <- memory[AR]`. |
-| 2 | `LATCH_IR`, `LATCH_PC` | `IR <- DR`, `PC <- PC + 1`. |
+| 1 | `LATCH_AR_PC`, `READ`, `LATCH_IR`, `LATCH_PC` | `AR <- PC`, `DR <- memory[AR]`, `IR <- DR`, `PC <- PC + 1`. |
 
 ### 3.2. Таблица инструкций
 
-`Fetch+execute` - полный цикл исполнения макрокоманды, включая общий двухтактный fetch.
+`Fetch+execute` - полный цикл исполнения макрокоманды, включая общий однотактный fetch.
 
 | Мнемоника | Opcode | Операнды | Execute, тактов | Fetch+execute | Семантика |
 |-----------|--------|----------|-----------------|---------------|-----------|
@@ -291,7 +290,7 @@ Control Unit является микропрограммным. Он не исп
 
 Микрокод хранится отдельно от основной памяти:
 
-- `FETCH_PROGRAM` - общий двухтактный `FETCH`;
+- `FETCH_PROGRAM` - общий однотактный `FETCH`;
 - `MICROPROGRAMS` - последовательность микропрограмм для opcode, не словарь микрокода;
 - `_build_micro_rom()` собирает линейное ПЗУ `MICRO_ROM_WORDS`;
 - `OPCODE_MICRO_RANGE` хранит `(start, length)` для каждой макрокоманды;
@@ -300,25 +299,21 @@ Control Unit является микропрограммным. Он не исп
 Алгоритм работы CU:
 
 1. Любая команда начинается с общего `FETCH`.
-2. Такт `FETCH 1`: `LATCH_AR_PC`, `READ`, то есть `PC -> AR -> memory[] -> DR`.
-3. Такт `FETCH 2`: `LATCH_IR`, `LATCH_PC`, то есть `DR -> IR`, `PC <- PC + 1`.
-4. Decoder берет `opcode` из `IR`.
-5. По `OPCODE_MICRO_RANGE[opcode]` выбирается старт и длина микропрограммы.
-6. `uPC` последовательно читает микрослова из `MICRO_ROM_WORDS`.
-7. Каждое микрослово выдает набор сигналов в DataPath.
-8. После последнего микрослова команда завершена, следующий такт снова начинает `FETCH`.
+2. Такт `FETCH`: `LATCH_AR_PC`, `READ`, `LATCH_IR`, `LATCH_PC`, то есть `PC -> AR -> memory[] -> DR -> IR`, `PC <- PC + 1`.
+3. Decoder берет `opcode` из `IR`.
+4. По `OPCODE_MICRO_RANGE[opcode]` выбирается старт и длина микропрограммы.
+5. `uPC` последовательно читает микрослова из `MICRO_ROM_WORDS`.
+6. Каждое микрослово выдает набор сигналов в DataPath.
+7. После последнего микрослова команда завершена, следующий такт снова начинает `FETCH`.
 
 Подробный потактовый разбор всех команд ISA вынесен в [COMMAND_TICKS.md](COMMAND_TICKS.md).
 
 Пример для `ADD`:
 
 ```text
-FETCH, 2 такта:
-  t1: LATCH_AR_PC, READ
-      PC -> AR -> memory[] -> DR
-
-  t2: LATCH_IR, LATCH_PC
-      DR -> IR
+FETCH, 1 такт:
+  t1: LATCH_AR_PC, READ, LATCH_IR, LATCH_PC
+      PC -> AR -> memory[] -> DR -> IR
       PC <- PC + 1
 
 EXECUTE, 3 такта:
